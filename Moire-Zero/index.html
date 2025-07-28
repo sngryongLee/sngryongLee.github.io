@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- <meta name="description" content="ProPainter for Video Inpainting">
+  <meta name="keywords" content="ProPainter, Video Inpainting, Video Completion, Watermark Removal, Temporal Propogation">
+  <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+  <title>Moiré Zero: An Efficient and High-Performance Neural Architecture for Moiré Removal</title>
+  <!-- <link rel="icon" href="./assets/images/moire.png" type="image/png"> -->
+
+
+> 
+
+  <style>
+  .hr {width: 100%; height: 1px; margin: 48px 0; background-color: #d6dbdf;}
+  </style>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+    }
+    th {
+      font-weight: bold;
+      border-bottom: 2px solid black;
+    }
+    td {
+      font-size: 1em;
+    }
+    .bold {
+      font-weight: bold;
+    }
+    .top-border {
+      border-top: 2px solid black;
+    }
+    .numeric {
+      font-family: 'Noto-Sans', sans-serif;
+      vertical-align: middle;
+    }
+  </style>
+  <style>
+  /* ── Qualitative 전용 추가·수정 ─────────────────────── */
+
+  /* (1) 컨테이너 폭만 제한, 높이는 auto */
+  #qualitative-carousel{
+    max-width: 1000px;      /* 원하는 값 */
+    margin: 0 auto;
+    overflow: hidden;
+  }
+
+  /* (2) 슬라이드 하나가 flex로 세로길이를 이미지에 맞추도록 */
+  #qualitative-carousel .carousel-item{
+    display: flex !important;
+    justify-content: center;
+    align-items: flex-start; /* 위쪽부터 채움 ‑ 빈 공간 ↓ */
+    height: auto !important; /* bulma 기본 높이 제거 */
+    padding: 0 !important;   /* bulma padding 제거 */
+  }
+
+  /* (3) 이미지는 부모 크기 그대로, 필요하면 max‑height 조절 */
+  #qualitative-carousel .carousel-item img{
+    max-width: 100%;
+    height: auto;
+    /* 보이는 이미지가 잘린다면 아래 줄 삭제 또는 값 늘리기 */
+    max-height: 700px;
+    object-fit: contain;
+  }
+  </style>
+
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+
+
+  <link rel="stylesheet" href="./assets/css/bulma.min.css">
+  <link rel="stylesheet" href="./assets/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./assets/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./assets/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="./assets/css/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+  <!-- custom css file  -->
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/twentytwenty.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script> -->
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">Moiré Zero: An Efficient and High-Performance Neural Architecture for Moiré Removal</h1>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                Seungryong Lee<sup>1</sup><sup>*</sup>,</span>
+              <span class="author-block">
+                Woojeong Baek<sup>2</sup><sup>*</sup>,</span>
+              <span class="author-block">
+                Younghyun Kim<sup>2</sup>,</span><br>
+              <span class="author-block">
+                Eunwoo Kim<sup>3</sup>,</span>
+              <span class="author-block">
+                Haru Moon<sup>3</sup>,</span>
+              <span class="author-block">
+                Donggon Yoo<sup>3</sup>,</span>
+              <span class="author-block">
+                <a href="https://silverbottlep.github.io/index.html">Eunbyung Park</a><sup>2</sup></span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>Sungkyunkwan University,</span>
+              <span class="author-block"><sup>2</sup>Yonsei University,</span>
+              <span class="author-block"><sup>3</sup>Samsung Display</span> <br>
+            </div>
+
+            <div class="column has-text-centered">
+                <div class="publication-links">
+                    <span class="link-block">
+                    <a href="" 
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                        <svg class="svg-inline--fa fa-file-pdf fa-w-12" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-pdf" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" data-fa-i2svg=""><path fill="currentColor" d="M181.9 256.1c-5-16-4.9-46.9-2-46.9 8.4 0 7.6 36.9 2 46.9zm-1.7 47.2c-7.7 20.2-17.3 43.3-28.4 62.7 18.3-7 39-17.2 62.9-21.9-12.7-9.6-24.9-23.4-34.5-40.8zM86.1 428.1c0 .8 13.2-5.4 34.9-40.2-6.7 6.3-29.1 24.5-34.9 40.2zM248 160h136v328c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V24C0 10.7 10.7 0 24 0h200v136c0 13.2 10.8 24 24 24zm-8 171.8c-20-12.2-33.3-29-42.7-53.8 4.5-18.5 11.6-46.6 6.2-64.2-4.7-29.4-42.4-26.5-47.8-6.8-5 18.3-.4 44.1 8.1 77-11.6 27.6-28.7 64.6-40.8 85.8-.1 0-.1.1-.2.1-27.1 13.9-73.6 44.5-54.5 68 5.6 6.9 16 10 21.5 10 17.9 0 35.7-18 61.1-61.8 25.8-8.5 54.1-19.1 79-23.2 21.7 11.8 47.1 19.5 64 19.5 29.2 0 31.2-32 19.7-43.4-13.9-13.6-54.3-9.7-73.6-7.2zM377 105L279 7c-4.5-4.5-10.6-7-17-7h-6v128h128v-6.1c0-6.3-2.5-12.4-7-16.9zm-74.1 255.3c4.1-2.7-2.5-11.9-42.8-9 37.1 15.8 42.8 9 42.8 9z"></path></svg><!-- <i class="fas fa-file-pdf"></i> Font Awesome fontawesome.com -->
+                    </span>
+                    <span>arXiv</span>
+                    </a>
+                    </span>
+                    <!-- Code Link. -->
+                    <span class="link-block">
+                    <a href="" 
+                       class="external-link button is-normal is-rounded is-dark">
+                        <span class="icon">
+                        <svg class="svg-inline--fa fa-github fa-w-16" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" data-fa-i2svg=""><path fill="currentColor" d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path></svg><!-- <i class="fab fa-github"></i> Font Awesome fontawesome.com -->
+                        </span>
+                        <span>Code</span>
+                    </a>
+                    </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+  </section>
+
+
+<!-- Third row -->
+<section class="hero is-light is-small">
+  <div class="hero-body second-body">
+    <div class="container">
+      <h3 class="title is-4" style="margin-bottom: 10px;">UHDM Datataset</h3>
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0013_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0013.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+               
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0126_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0126.png" alt="After Image" width="100%"></div>
+          </div>
+         </div>
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0001_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0001_ours.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0002_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0002.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0004_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0004.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>       
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0020_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0020.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0419_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0419.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>       
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0487_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0487.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0348_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0348.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/uhdm/input/0260_moire.jpg" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/uhdm/restored/0260.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+      </div>
+
+       
+      </div>
+  </div>
+</section>
+
+
+<!-- Third row -->
+<section class="hero is-light is-small">
+  <div class="hero-body second-body">
+    <div class="container">
+      <h3 class="title is-4" style="margin-bottom: 10px;">FHDMi Datataset</h3>
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_02514.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/02514.png" alt="After Image" width="100%"></div>
+          </div>
+         </div>
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_01992.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/01992.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>       
+
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_02895.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/02895.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_03663.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/03663.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_03999.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/03999.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>       
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_04771.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/04771.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_05497.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/05497.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>       
+        <div class="item">
+          <div class="twentytwenty-container" data-orientation="horizontal" ratio="0.5625">
+            <!-- <div class="full" style="margin-top: 2px; margin-right: 2px; height: 40px; width: 28px;"></div> -->
+            <div class="video"><div class="desc_left">Input</div><img src="./assets/images/fhdmi/input/src_05689.png" alt="Before Image" width="100%"></div>
+            <div class="video"><div class="desc">Restored</div><img src="./assets/images/fhdmi/restored/05689.png" alt="After Image" width="100%"></div>
+          </div>
+        </div>
+      </div> 
+      </div>
+  </div>
+</section>
+
+
+
+<!-- Abstract -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Moiré patterns, caused by frequency aliasing between fine repetitive structures and a camera sensor's sampling process,
+            have been a significant obstacle in various real-world applications, such as consumer photography and industrial defect inspection.
+            With the advancements in deep learning algorithms, numerous studies--predominantly based on convolutional neural networks--have suggested various solutions to address this issue. 
+            Despite these efforts, existing approaches still struggle to effectively eliminate artifacts due to the diverse scales, orientations, 
+            and color shifts of moiré patterns, primarily because the constrained receptive field of CNN-based architectures limits their ability to capture the complex characteristics of moiré patterns.
+            In this paper, we propose MZNet, a U-shaped network designed to bring images closer to a 'Moiré-Zero' state by effectively removing moiré patterns. 
+            It integrates three specialized components: Multi-Scale Dual Attention Block (MSDAB) for extracting and refining multi-scale features, Multi-Shape Large Kernel Convolution Block (MSLKB) for capturing diverse moiré structures,
+            and Feature Fusion-Based Skip Connection for enhancing information flow. Together, these components enhance local texture restoration and large-scale artifact suppression.
+            Experiments on benchmark datasets demonstrate that MZNet achieves state-of-the-art performance on high-resolution datasets and delivers competitive results on lower-resolution dataset,
+            while maintaining a low computational cost, suggesting that it is an efficient and practical solution for real-world applications.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+
+
+
+
+<!-- Method -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-3">Method</h2>
+          <div class="content has-text-justified">
+            <div style="margin-top: 30px">
+              <img src="./assets/images/architecture.jpg">
+            </div>
+            <p align="justify">
+              The model follows a U-Net architecture with four levels of encoders and decoders. MSDAB are
+              used in both the encoder and decoder, while the middle block incorporates a single MSLKB. FS modules in the skip connections
+              facilitate feature fusion across scales. (For more details, please refer to our <a href=""><span>paper</span></a>!)
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container is-max-desktop">
+      <!-- Concurrent Work. -->
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="title is-4">MZNet Components</h2>
+          <div class="content has-text-justified">
+            <div style="text-align: center; margin-top: 20px;">
+              <img src="./assets/images/block.jpg" style="width: 60%;">
+            </div>
+            <p align="justify">
+              We propose a novel architecture composed of several specialized modules to address moiré patterns effectively.
+              First, the Multi-Scale Dual Attention Block (MSDAB) captures moiré patterns at various scales using a combination of Multi-Dilation Convolution Module (MDCM) and Dual Attention Module (DAM). 
+              MDCM expands the receptive field through depth-wise dilated convolutions, while DAM applies attention mechanisms (SCA and LKA) to suppress both fine textures and large artifacts.
+              To handle directional diversity, the Multi-Shape Large Kernel Block (MSLKB) uses depth-wise convolutions with square, horizontal, and vertical kernels at the network bottleneck.
+              Finally, the Feature Fusion-Based Skip Connection (FFSC) enhances detail reconstruction by injecting aggregated encoder features into each decoder level, ensuring rich multi-scale context.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+<script>
+  document.querySelectorAll('.twentytwenty-container').forEach(container => {
+    container.addEventListener('mousemove', (event) => {
+      const desc = container.querySelector('.desc');
+      if (desc) {
+        const descRect = desc.getBoundingClientRect();
+        const mouseX = event.clientX;
+
+        const x = mouseX - descRect.left;
+
+        desc.style.clipPath = `polygon(${Math.max(0, x + 2)}px 0, 100% 0, 100% 100%, ${Math.max(0, x + 2)}px 100%)`;
+      }
+    });
+  });
+</script>
+
+
+<style>
+  .custom-shadow-table {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 부드러운 그림자 */
+    border-radius: 8px; /* 모서리 둥글게 */
+    overflow: hidden;
+  }
+</style>
+<style>
+  .custom-shadow-table th,
+  .custom-shadow-table td {
+    white-space: nowrap;         /* 줄바꿈 방지 */
+    overflow: hidden;            /* 넘치는 내용 숨김 */
+    text-overflow: ellipsis;     /* 넘치면 ...으로 표시 */
+    max-width: 140px;            /* 최대 너비 설정 (원하는 크기로 조절 가능) */
+  }
+  .best-score {
+    background-color: #ffcccc;  /* 연한 빨간색 */
+    font-weight: bold;
+  }
+
+  .second-best-score {
+    background-color: #fff6b2;  /* 연한 노란색 */
+    font-weight: bold;
+  }
+</style>
+
+
+</style>
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column">
+        <h2 class="title is-3" style="margin-bottom: 40px;">Quantitative Results</h2>
+        <div class="content has-text-centered">
+          <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth custom-shadow-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Dataset</th>
+                <th rowspan="2">Metrics</th>
+                <th>Input</th>
+                <th>DMCNN</th>
+                <th>MDDM</th>
+                <th>WDNet</th>
+                <th>MopNet</th>
+                <th>MBCNN</th>
+                <th>FHDe²Net</th>
+                <th>ESDNet</th>
+                <th>ESDNet-L</th>
+                <th>MCFNet</th>
+                <th>P-BiC</th>
+                <th><strong>MZNet (Ours)</strong></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- TIP2018 -->
+              <tr>
+                <th rowspan="2">TIP2018</td>
+                <th>PSNR↑</td>
+                <td>20.30</td><td>26.77</td><td>-</td><td>28.08</td><td>27.75</td><td>28.03</td><td>27.78</td><td>29.81</td><td>30.11</td><td>30.13</td><td class="best-score">30.56</strong></td><td class="second-best-score">30.18</td>
+              </tr>
+              <tr>
+                <th>SSIM↑</td>
+                <td>0.738</td><td>0.871</td><td>-</td><td>0.904</td><td>0.895</td><td>0.893</td><td>0.896</td><td>0.916</td><td>0.920</td><td>0.920</td><td class="best-score">0.925</strong></td><td class="second-best-score">0.921</td>
+              </tr>
+
+              <!-- FHDMi -->
+              <tr>
+                <th rowspan="3">FHDMi</td>
+                <th>PSNR↑</td>
+                <td>17.974</td><td>21.538</td><td>20.831</td><td>-</td><td>22.756</td><td>22.309</td><td>22.930</td><td>24.500</td><td>24.882</td><td>24.823</td><td class="second-best-score">25.450</td><td class="best-score">26.120</strong></td>
+              </tr>
+              <tr>
+                <th>SSIM↑</td>
+                <td>0.7033</td><td>0.7727</td><td>0.7343</td><td>-</td><td>0.7958</td><td>0.8095</td><td>0.7885</td><td>0.8351</td><td>0.8440</td><td>0.8426</td><td class="second-best-score">0.8473</td><td class="best-score">0.8624</strong></td>
+              </tr>
+              <tr>
+                <th>LPIPS↓</td>
+                <td>0.2837</td><td>0.2477</td><td>0.2515</td><td>-</td><td>0.1794</td><td>0.1980</td><td>0.1688</td><td>0.1354</td><td>0.1301</td><td class="second-best-score">0.1288</td><td>0.1493</td><td class="best-score">0.1042</strong></td>
+              </tr>
+
+              <!-- UHDM -->
+              <tr>
+                <th rowspan="3">UHDM</td>
+                <th>PSNR↑</td>
+                <td>17.117</td><td>19.914</td><td>20.088</td><td>20.364</td><td>19.489</td><td>21.003</td><td>20.388</td><td>22.119</td><td>22.422</td><td>22.484</td><td class="second-best-score">23.30</td><td class="best-score">23.632</td>
+              </tr>
+              <tr>
+                <th>SSIM↑</td>
+                <td>0.5089</td><td>0.7575</td><td>0.7441</td><td>0.6497</td><td>0.7572</td><td>0.7423</td><td>0.7496</td><td>0.7956</td><td>0.7985</td><td>0.8001</td><td class="second-best-score">0.8007</td><td class="best-score">0.8096</td>
+              </tr>
+              <tr>
+                <th>LPIPS↓</td>
+                <td>0.5314</td><td>0.3764</td><td>0.3409</td><td>0.4882</td><td>0.3857</td><td>0.3318</td><td>0.3519</td><td>0.2551</td><td>0.2454</td><td>0.2536</td><td class="second-best-score">0.2324</td><td class="best-score">0.2237</td>
+              </tr>
+
+              <!-- Params & MACs -->
+              <tr>
+                <th colspan="2">Params↓ (M)</td>
+                <td>-</td><td class="best-score">1.426</strong></td><td>7.637</td><td class="second-best-score">3.360</strong></td><td>58.565</td><td>14.192</td><td>13.571</td><td>5.934</td><td>10.623</td><td>6.181</td><td>4.922</td><td>14.824</td>
+              </tr>
+              <tr>
+                <th colspan="2">MACs↓ (T)</td>
+                <td>-</td><td>2.258</td><td>3.679</td><td>1.757</td><td>-</td><td>8.522</td><td>33.23</td><td>2.247</td><td>3.689</td><td>6.903</td><td class="second-best-score">1.223</td><td class="best-score">1.190</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Qualitative Results ------------------------------------------------------>
+<section class="hero is-small" id="qualitative-results">
+  <div class="hero-body">
+    <div class="container">
+      <h3 class="title is-3 has-text-centered" style="margin-bottom:30px;">Qualitative Results</h3>
+
+      <!-- ↓↓↓  여기 ID 만 새로 → 중복 ID 안 됨  -->
+      <div id="qualitative-carousel" class="carousel results-carousel">
+        
+        <!-- 1 -->
+        <div class="item">
+          <img src="./assets/images/supple_uhdm_1.jpg" alt="Qual 1">
+        </div>
+
+        <!-- 2 -->
+        <div class="item">
+          <img src="./assets/images/supple_uhdm_2.jpg" alt="Qual 2">
+        </div>
+        <!-- 1 -->
+        <div class="item">
+          <img src="./assets/images/supple_uhdm_3.jpg" alt="Qual 3">
+        </div>
+
+        <!-- 2 -->
+        <div class="item">
+          <img src="./assets/images/supple_uhdm_4.jpg" alt="Qual 4">
+        </div>
+        <!-- 1 -->
+        <div class="item">
+          <img src="./assets/images/supple_uhdm_5.jpg" alt="Qual 5">
+        </div>
+
+        <!-- 2 -->
+        <div class="item">
+          <img src="./assets/images/supple_fhdmi_1.jpg" alt="Qual 6">
+        </div>
+        <!-- 필요만큼 .item 추가 -->
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>
+      <!-- @article{lee2024aberration,
+      title={Aberration Correcting Vision Transformers for High-Fidelity Metalens Imaging},
+      author={Lee, Byeonghyeon and Kim, Youbin and Jo, Yongjae and Kim, Hyunsu and Park, Hyemi and Kim, Yangkyu and Mandal, Debabrata and Chakravarthula, Praneeth and Kim, Inki and Park, Eunbyung},
+      journal={arXiv preprint arXiv:2412.04591},year={2024}} -->
+    </code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <div class="columns is-centered"><p>
+            This website template is borrowed from <a href="https://github.com/nerfies/nerfies.github.io" target="_blank">nerfies</a> and <a href="https://github.com/sczhou/ProPainter_website" target="_blank">ProPainter</a>.
+          </p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+  <!-- custom js file  -->
+  <!-- <script defer src="./assets/js/fontawesome.all.min.js"></script> -->
+  <script src="./assets/js/bulma-carousel.min.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    /* 기존 attach(#qualitative-carousel …) 가 있으면 지우고 이 한 블록만 남기세요 */
+    bulmaCarousel.attach('#qualitative-carousel',{
+      slidesToShow  : 1,
+      slidesToScroll: 1,
+      loop          : true,
+      autoplay      : true,
+      autoplaySpeed : 3000,
+      navigation    : true,   // 화살표 켜기
+      pagination    : false,  // 점(도트) 끔
+    });
+  });
+  </script>
+
+  <script src="./assets/js/bulma-slider.min.js"></script>
+  <script src="./assets/js/index.js"></script>
+  <script src="./assets/js/jquery.event.move.js"></script>
+  <script src="./assets/js/jquery.twentytwenty.js"></script>
+  <script>
+  $(function(){
+    $(".twentytwenty-container").twentytwenty();
+    // $(".twentytwenty-container", "#results-carousel").twentytwenty({default_offset_pct: 0.5, ratio: 0.5});
+  });
+  </script>
+
+
+</body>
+</html>
