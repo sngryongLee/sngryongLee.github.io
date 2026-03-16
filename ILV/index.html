@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ILV: Iterative Latent Volumes for Fast and Accurate Sparse-View CT Reconstruction</title>
+  
+  <style>
+    .hero-header {
+      position: relative;
+      overflow: hidden;
+      padding: 2.5rem 1.5rem 1.75rem 1.5rem !important;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.10), transparent 28%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.10), transparent 32%),
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      text-align: center;
+    }
+
+    .hero-header::before,
+    .hero-header::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(60px);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .hero-header::before {
+      width: 260px;
+      height: 260px;
+      top: -80px;
+      left: -40px;
+      background: rgba(59, 130, 246, 0.18);
+    }
+
+    .hero-header::after {
+      width: 260px;
+      height: 260px;
+      top: -60px;
+      right: -40px;
+      background: rgba(139, 92, 246, 0.18);
+    }
+    .publication-title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800 !important;
+      font-size: 3.75rem !important;
+      letter-spacing: -0.04em !important;
+      line-height: 1.05 !important;
+      color: #0f172a;
+      margin-bottom: 2rem !important;
+    }
+
+    .title-highlight {
+      display: inline-block;
+      position: relative;
+      background: linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-highlight::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(37, 99, 235, 0.1);
+      border-radius: 2px;
+      z-index: -1;
+    }
+
+    .section-title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800 !important;
+      font-size: 2.25rem !important;
+      letter-spacing: -0.02em !important;
+      color: #0f172a;
+      margin-bottom: 1.5rem !important;
+      position: relative;
+      display: inline-block;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: -8px;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #7c3aed);
+      border-radius: 2px;
+    }
+
+    .publication-authors {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem !important;
+      color: #334155;
+      margin-bottom: 0.5rem !important;
+    }
+
+    .author-block {
+      display: inline-block;
+      margin: 0 8px;
+    }
+
+    .author-block a {
+      color: #2563eb;
+      font-weight: 600;
+      border-bottom: 1.5px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .author-block a:hover {
+      border-bottom-color: #2563eb;
+      text-decoration: none !important;
+    }
+
+    .affiliation-block {
+      color: #64748b !important;
+      font-size: 1.1rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+
+    .publication-links .button {
+      padding: 0.75rem 1.5rem !important;
+      font-weight: 600 !important;
+      border: none !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    .publication-links .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .teaser-hero {
+      background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+      padding: 0 0 10px 0 !important;
+    }
+
+    .teaser-container {
+      max-width: 1000px !important;
+      margin: 0 auto 10px auto !important;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .teaser-container video {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      display: block;
+    }
+
+    .abstract-section {
+      background-color: #f8f9fa;
+      position: relative;
+      padding: 4rem 0 !important;
+    }
+
+    .abstract-box {
+      background: white;
+      padding: 40px 50px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .compact-section {
+      padding: 4rem 0 !important;
+    }
+
+    .results-section {
+      padding: 3rem 0 !important;
+    }
+
+    .results-section .container {
+      max-width: 1000px !important;
+    }
+
+    .carousel-container {
+      margin: 0 auto !important;
+      overflow: hidden !important;
+    }
+
+    .xnvs-container {
+      max-width: 700px !important;
+      margin: 0 auto !important;
+      overflow: hidden !important;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .xnvs-caption-wrap {
+      max-width: 700px;
+      margin: 15px auto 0 auto;
+      padding: 0 10px;
+    }
+
+    .custom-shadow-table {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .table thead th {
+      background-color: #f8fafc;
+      vertical-align: middle !important;
+      text-align: center !important;
+      border-bottom: 2px solid #e2e8f0 !important;
+      color: #475569;
+    }
+
+    .best-score {
+      font-weight: bold;
+      background-color: #f0fdf4 !important;
+    }
+
+    .table-caption {
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: #475569;
+      font-size: 1.1rem;
+    }
+
+    .results-caption {
+      margin-top: 15px;
+      font-size: 1rem;
+      color: #64748b;
+      line-height: 1.6;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    .results-caption.is-left {
+      text-align: left;
+    }
+    
+  </style>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/bulma.min.css">
+  <link rel="stylesheet" href="./assets/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./assets/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./assets/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="./assets/css/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+
+  <section class="hero-header">
+    <div class="hero-bg-layer"></div>
+    <div class="hero-bg-grid"></div>
+
+    <div class="container header-container">
+      <h1 class="title publication-title">
+        <span class="title-highlight">ILV</span>: Iterative Latent Volumes for Fast and <br> Accurate Sparse-View CT Reconstruction
+      </h1>
+
+      <div class="publication-authors">
+        <span class="author-block">Seungryong Lee<sup>1</sup>,</span>
+        <span class="author-block">Woojeong Baek<sup>2</sup>,</span>
+        <span class="author-block">Joosang Lee<sup>1</sup>,</span>
+        <span class="author-block"><a href="https://silverbottlep.github.io/index.html">Eunbyung Park</a><sup>2&dagger;</sup></span>
+      </div>
+
+      <div class="affiliation-block">
+        <span class="author-block"><sup>1</sup>Sungkyunkwan University</span>
+        <span class="author-block"><sup>2</sup>Yonsei University</span>
+      </div>
+
+      <div class="publication-links">
+        <span class="link-block">
+          <a href="" class="button is-dark is-rounded">
+            <span class="icon"><i class="fas fa-file-pdf"></i></span>
+            <span>arXiv</span>
+          </a>
+        </span>
+        <span class="link-block" style="margin-left: 10px;">
+          <a href="https://github.com/sngryongLee/ILV" class="button is-dark is-rounded">
+            <span class="icon"><i class="fab fa-github"></i></span>
+            <span>Code</span>
+          </a>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero is-small teaser-hero">
+    <div class="hero-body" style="padding: 0 !important;">
+      <div class="container teaser-container">
+        <div id="teaser-carousel" class="carousel teaser-carousel">
+          <div class="item teaser-item">
+            <video poster="" autoplay muted loop playsinline height="100%">
+              <source src="./assets/images/1.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="item teaser-item">
+            <video poster="" autoplay muted loop playsinline height="100%">
+              <source src="./assets/images/5.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="item teaser-item">
+            <video poster="" autoplay muted loop playsinline height="100%">
+              <source src="./assets/images/2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="item teaser-item">
+            <video poster="" autoplay muted loop playsinline height="100%">
+              <source src="./assets/images/3.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div class="item teaser-item">
+            <video poster="" autoplay muted loop playsinline height="100%">
+              <source src="./assets/images/4.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <p class="results-caption is-left" style="margin-top: 20px; padding: 0;">
+          <strong>Reconstruction quality across axial, sagittal, and coronal views.</strong>
+          All baselines are optimization-based methods that require substantial reconstruction time:
+          IntraTomo (9m 26s), NAF (5m 04s), SAX-NeRF (1h 35m), and R<sup>2</sup>-Gaussian (17m 37s),
+          while our method (ILV) completes reconstruction
+          <span style="color: red; font-weight: bold;">less than a second (0.76s)</span>
+          with achieving significantly higher quality.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section abstract-section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-five-fifths">
+          <div class="abstract-box">
+            <h2 class="section-title">Abstract</h2>
+            <div class="content has-text-justified is-size-6">
+              <p>
+                A long-term goal in CT imaging is to achieve fast and accurate 3D reconstruction from sparse-view projections, thereby reducing radiation exposure, lowering system cost, and enabling timely imaging in clinical workflows.
+                Recent feed-forward approaches have shown strong potential toward this overarching goal, yet their results still suffer from artifacts and loss of fine details.
+                In this work, we introduce <strong>Iterative Latent Volumes (ILV)</strong>, a feed-forward framework that integrates data-driven priors with classical iterative reconstruction principles to overcome key limitations of prior feed-forward models in sparse-view CBCT reconstruction.<br>
+                At its core, ILV constructs an explicit 3D latent volume that is repeatedly updated by conditioning on multi-view X-ray features and the learned anatomical prior, enabling the recovery of fine structural details beyond the reach of prior feed-forward models. 
+                In addition, we develop and incorporate several key architectural components, including an X-ray feature volume, group cross-attention, efficient self-attention, and view-wise feature aggregation, that efficiently realize its core latent volume refinement concept. 
+                Extensive experiments on a large-scale dataset of approximately 14,000 CT volumes demonstrate that ILV significantly outperforms existing feed-forward and optimization-based methods in both reconstruction quality and speed. These results show that ILV enables fast and accurate sparse-view CBCT reconstruction suitable for clinical use.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section compact-section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width">
+          <h2 class="section-title">Pipeline Architecture</h2>
+          <div class="content has-text-justified" style="margin-top: 0rem;">
+            <div style="text-align: center;">
+              <img src="./assets/images/pipeline.jpg" style="max-width: 100%; border-radius: 16px;">
+            </div>
+            <p align="justify" style="margin-top: 2.5rem; color: #475569; line-height: 1.7;">
+              Overview of the proposed <strong>ILV</strong>. Given multi-view X-ray images, ILV reconstructs a 3D CT volume or synthesizes novel-view
+              projections. The overall network consists of four stages: (1) Multi-view X-ray image encoding, (2) Latent volume update, (3) Gaussian
+              volume decoding, and (4) CT volume refinement. (For more details, please refer to our <a href="">paper</a>.)
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section compact-section" style="background-color: #f8fafc;">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full-width" style="margin-top: 0mm;">
+          <h2 class="section-title">Quantitative Comparison</h2>
+
+          <div class="content has-text-centered" style="margin-top: 0rem;">
+            <p class="table-caption">Comparison with feed-forward methods</p>
+            <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth custom-shadow-table">
+              <thead>
+                <tr>
+                  <th rowspan="2">Type</th>
+                  <th rowspan="2">Method</th>
+                  <th rowspan="2">Time ↓</th>
+                  <th colspan="2">6-View</th>
+                  <th colspan="2">8-View</th>
+                  <th colspan="2">10-View</th>
+                </tr>
+                <tr>
+                  <th>PSNR↑</th>
+                  <th>SSIM↑</th>
+                  <th>PSNR↑</th>
+                  <th>SSIM↑</th>
+                  <th>PSNR↑</th>
+                  <th>SSIM↑</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th rowspan="3">Traditional</th>
+                  <td>FDK</td>
+                  <td class="best-score">0.23s</td>
+                  <td>12.79</td><td>0.122</td><td>14.58</td><td>0.145</td><td>14.75</td><td>0.166</td>
+                </tr>
+                <tr>
+                  <td>ASD-POCS</td>
+                  <td>1m 32s</td>
+                  <td>22.48</td><td>0.661</td><td>23.57</td><td>0.695</td><td>24.37</td><td>0.721</td>
+                </tr>
+                <tr>
+                  <td>SART</td>
+                  <td>2m 48s</td>
+                  <td>23.21</td><td>0.689</td><td>24.26</td><td>0.712</td><td>25.06</td><td>0.733</td>
+                </tr>
+                <tr>
+                  <th>2D FF</th>
+                  <td>FreeSeed</td>
+                  <td>4.5s</td>
+                  <td>28.81</td><td>0.793</td><td>29.61</td><td>0.833</td><td>30.34</td><td>0.837</td>
+                </tr>
+                <tr>
+                  <th rowspan="3">3D FF</th>
+                  <td>DIF-Net</td>
+                  <td>3.0s</td>
+                  <td>24.18</td><td>0.720</td><td>24.59</td><td>0.734</td><td>24.65</td><td>0.745</td>
+                </tr>
+                <tr>
+                  <td>DIF-Gaussian</td>
+                  <td>3.0s</td>
+                  <td>26.56</td><td>0.810</td><td>27.46</td><td>0.829</td><td>27.88</td><td>0.837</td>
+                </tr>
+                <tr>
+                  <td><strong>ILV (Ours)</strong></td>
+                  <td>0.59s</td>
+                  <td class="best-score">33.45</td><td class="best-score">0.922</td>
+                  <td class="best-score">33.25</td><td class="best-score">0.919</td>
+                  <td class="best-score">33.84</td><td class="best-score">0.924</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="content has-text-centered" style="margin-top: 3rem;">
+            <p class="table-caption">Comparison with optimization-based (NeRF/Gaussian) methods</p>
+            <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth custom-shadow-table">
+              <thead>
+                <tr>
+                  <th rowspan="2">Method</th>
+                  <th rowspan="2">Time ↓</th>
+                  <th colspan="2">6-View</th>
+                  <th colspan="2">10-View</th>
+                  <th colspan="2">24-View</th>
+                </tr>
+                <tr>
+                  <th>PSNR↑</th>
+                  <th>SSIM↑</th>
+                  <th>PSNR↑</th>
+                  <th>SSIM↑</th>
+                  <th>PSNR↑</th>
+                  <th>SSIM↑</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>IntraTomo</td>
+                  <td>9m 26s</td>
+                  <td>24.49</td><td>0.722</td><td>26.30</td><td>0.772</td><td>28.62</td><td>0.837</td>
+                </tr>
+                <tr>
+                  <td>NAF</td>
+                  <td>5m 04s</td>
+                  <td>23.74</td><td>0.678</td><td>26.17</td><td>0.741</td><td>31.34</td><td>0.876</td>
+                </tr>
+                <tr>
+                  <td>SAX-NeRF</td>
+                  <td>1h 35m</td>
+                  <td>24.58</td><td>0.754</td><td>26.78</td><td>0.794</td><td>33.14</td><td>0.919</td>
+                </tr>
+                <tr>
+                  <td>R²-Gaussian</td>
+                  <td>17m 37s</td>
+                  <td>24.54</td><td>0.773</td><td>27.26</td><td>0.823</td><td>33.29</td><td>0.931</td>
+                </tr>
+                <tr>
+                  <td><strong>ILV (Ours)</strong></td>
+                  <td class="best-score">0.76s</td>
+                  <td class="best-score">33.57</td><td class="best-score">0.923</td>
+                  <td class="best-score">33.95</td><td class="best-score">0.925</td>
+                  <td class="best-score">35.93</td><td class="best-score">0.941</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero is-small results-section" id="qualitative-results">
+    <div class="hero-body">
+      <div class="container">
+        <div class="has-text-centered" style="margin-bottom: 0rem;">
+          <h2 class="section-title">Qualitative Comparison</h2>
+        </div>
+        <div class="carousel-container">
+          <div id="qualitative-carousel" class="carousel results-carousel">
+            <div class="item"><img src="./assets/images/suppl1.jpg" alt="Qual 1"></div>
+            <div class="item"><img src="./assets/images/suppl2.jpg" alt="Qual 2"></div>
+            <div class="item"><img src="./assets/images/suppl3.jpg" alt="Qual 3"></div>
+            <div class="item"><img src="./assets/images/suppl4.jpg" alt="Qual 4"></div>
+            <div class="item"><img src="./assets/images/suppl5.jpg" alt="Qual 5"></div>
+            <div class="item"><img src="./assets/images/suppl6.jpg" alt="Qual 6"></div>
+            <div class="item"><img src="./assets/images/suppl7.jpg" alt="Qual 7"></div>
+            <div class="item"><img src="./assets/images/suppl8.jpg" alt="Qual 8"></div>
+          </div>
+        </div>
+        <p class="results-caption is-left">
+          Visual comparison of <strong>CT reconstruction</strong> across different views. ILV achieves significantly cleaner structural details and consistency under both 10-view and 24-view sparse settings compared to existing methods.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero is-small results-section" style="background-color: #f8fafc;" id="xnvs-results">
+    <div class="hero-body">
+      <div class="container">
+        <div class="has-text-centered" style="margin-bottom: 0rem;">
+          <h2 class="section-title">X-ray Novel View Synthesis</h2>
+        </div>
+
+        <div class="xnvs-container">
+          <div id="xnvs-carousel" class="carousel results-carousel">
+            <div class="item"><img src="./assets/images/xnvs1.jpg" alt="XNVS 1"></div>
+            <div class="item"><img src="./assets/images/xnvs2.jpg" alt="XNVS 2"></div>
+            <div class="item"><img src="./assets/images/xnvs3.jpg" alt="XNVS 3"></div>
+          </div>
+        </div>
+
+        <div class="xnvs-caption-wrap">
+          <p class="results-caption is-left" style="padding: 0; margin-top: 0;">
+            Synthesis results for <strong>X-ray novel view synthesis</strong>.
+            ILV successfully recovers sharp object boundaries and consistent internal structures.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer" style="padding: 4rem 0;">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content has-text-centered">
+            <p style="color: #94a3b8; font-size: 0.9rem;">
+              This website template is inspired by
+              <a href="https://github.com/nerfies/nerfies.github.io" style="color: #64748b;">nerfies</a>
+              and
+              <a href="https://github.com/sczhou/ProPainter_website" style="color: #64748b;">ProPainter</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./assets/js/bulma-carousel.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const options = {
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        loop: true,
+        autoplay: true,
+        autoplaySpeed: 100000,
+        navigation: true,
+        pagination: false,
+        breakPoints: {
+          0: { slidesToShow: 1 },
+          480: { slidesToShow: 1 },
+          768: { slidesToShow: 1 }
+        }
+      };
+
+      bulmaCarousel.attach('#teaser-carousel', {
+        ...options,
+        autoplaySpeed: 100000,
+        pagination: true,
+      });
+
+      bulmaCarousel.attach('#qualitative-carousel', options);
+      bulmaCarousel.attach('#xnvs-carousel', options);
+    });
+  </script>
+
+</body>
+</html>
